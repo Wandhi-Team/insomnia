@@ -1,7 +1,7 @@
 .idea/
 .github/
 docker/
-screenshots/
+traces/
 **/*.min.js
 **/build/
 **/dist/
@@ -14,6 +14,4 @@ screenshots/
 **/__snapshots__/
 **/dist/
 **/.cache/
-**/svgr/
-**/storybook-static/
 *.md

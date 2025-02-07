@@ -2,8 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import YAML from 'yaml';
 
-import { InsoError } from '../../errors';
-import { UNKNOWN } from '../../types';
+import { InsoError } from '../../cli';
 import { DbAdapter } from '../index';
 import { emptyDb } from '../index';
 import { BaseModel } from '../models/types';
@@ -26,7 +25,7 @@ import { BaseModel } from '../models/types';
  * models.unitTest.type = 'UnitTest';
  * </pre>
  *
- * @see packages/insomnia-app/app/common/import.js
+ * @see packages/insomnia/src/common/import.js
  */
 
 type RawTypeKey = 'api_spec'
@@ -85,8 +84,8 @@ const insomniaAdapter: DbAdapter = async (filePath, filterTypes) => {
   } | undefined;
   try {
     parsed = YAML.parse(content);
-  } catch (e) {
-    throw new InsoError(`Failed to parse ${fileName}.`, e);
+  } catch (error) {
+    throw new InsoError(`Failed to parse ${fileName}.`, error);
   }
 
   // We are supporting only v4 files
@@ -110,7 +109,7 @@ const insomniaAdapter: DbAdapter = async (filePath, filterTypes) => {
       const obj = parseRaw(model);
 
       // Store it, only if the key value exists
-      (db[obj.type] as UNKNOWN[])?.push(obj);
+      (db[obj.type] as {}[])?.push(obj);
     }
   });
 
@@ -118,3 +117,4 @@ const insomniaAdapter: DbAdapter = async (filePath, filterTypes) => {
 };
 
 export default insomniaAdapter;
+export const insomniaExportAdapter = insomniaAdapter;
