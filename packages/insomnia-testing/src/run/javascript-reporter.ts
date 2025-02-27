@@ -3,9 +3,9 @@
  *
  * https://github.com/mochajs/mocha/blob/9d4a8ec2d22ee154aecb1f8eeb25af8e6309faa8/lib/reporters/json.js
  */
-import Mocha, { MochaOptions, reporters, Runnable, Runner, Test } from 'mocha';
+import Mocha, { type MochaOptions, reporters, Runnable, Runner, Test } from 'mocha';
 
-import { TestResult, TestResults } from './entities';
+import type { TestResult, TestResults } from './entities';
 
 export class JavaScriptReporter extends reporters.Base {
   description = 'single JS object';
@@ -62,6 +62,7 @@ const clean = (runnable: Runnable): TestResult => {
   }
 
   return {
+    id: runnable.id,
     title: runnable.title,
     fullTitle: runnable.fullTitle(),
     file: runnable.file,

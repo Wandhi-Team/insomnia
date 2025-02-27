@@ -1,23 +1,15 @@
 import chai from 'chai';
 import { unlink, writeFileSync } from 'fs';
-import { sync } from 'mkdirp';
-import Mocha, { Reporter, ReporterConstructor } from 'mocha';
+import fs from 'fs';
+import Mocha, { type Reporter, type ReporterConstructor } from 'mocha';
 import { tmpdir } from 'os';
 import { join } from 'path';
 
-import { TestResults } from './entities';
-import { Insomnia, InsomniaOptions } from './insomnia';
+import type { TestResults } from './entities';
+import { Insomnia, type InsomniaOptions } from './insomnia';
 import { JavaScriptReporter } from './javascript-reporter';
 
-declare global {
-  namespace NodeJS {
-    interface Global {
-      insomnia?: Insomnia;
-      chai?: typeof chai;
-    }
-  }
-}
-
+// declare var insomnia: Insomnia;
 const runInternal = async <TReturn, TNetworkResponse>(
   testSrc: string | string[],
   options: InsomniaOptions<TNetworkResponse>,
@@ -28,7 +20,12 @@ const runInternal = async <TReturn, TNetworkResponse>(
 
   // Add global `insomnia` helper.
   // This is the only way to add new globals to the Mocha environment as far as I can tell
+  // @ts-expect-error -- global hack
   global.insomnia = new Insomnia(options);
+
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  chai.use(require('chai-json-schema'));
+  // @ts-expect-error -- global hack
   global.chai = chai;
 
   const mocha: Mocha = new Mocha({
@@ -37,7 +34,6 @@ const runInternal = async <TReturn, TNetworkResponse>(
     globals: ['insomnia', 'chai'],
     bail,
     reporter,
-    // @ts-expect-error https://github.com/DefinitelyTyped/DefinitelyTyped/pull/51770
     fgrep: testFilter,
   });
 
@@ -51,7 +47,9 @@ const runInternal = async <TReturn, TNetworkResponse>(
       resolve(extractResult(runner));
 
       // Remove global since we don't need it anymore
+      // @ts-expect-error -- global hack
       delete global.insomnia;
+      // @ts-expect-error -- global hack
       delete global.chai;
 
       if (keepFile && mocha.files.length) {
@@ -78,8 +76,9 @@ const runInternal = async <TReturn, TNetworkResponse>(
  */
 const writeTempFile = (sourceCode: string) => {
   const root = join(tmpdir(), 'insomnia-testing');
-  sync(root);
-  const path = join(root, `${Math.random()}-test.ts`);
+  fs.mkdirSync(root, { recursive: true });
+
+  const path = join(root, `${crypto.randomUUID()}-test.ts`);
   writeFileSync(path, sourceCode);
   return path;
 };

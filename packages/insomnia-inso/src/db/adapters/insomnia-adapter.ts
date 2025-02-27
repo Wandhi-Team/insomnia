@@ -1,9 +1,9 @@
 import fs from 'fs';
+import { importInsomniaV5Data } from 'insomnia/src/common/insomnia-v5';
 import path from 'path';
 import YAML from 'yaml';
 
-import { InsoError } from '../../errors';
-import { UNKNOWN } from '../../types';
+import { InsoError } from '../../cli';
 import { DbAdapter } from '../index';
 import { emptyDb } from '../index';
 import { BaseModel } from '../models/types';
@@ -26,7 +26,7 @@ import { BaseModel } from '../models/types';
  * models.unitTest.type = 'UnitTest';
  * </pre>
  *
- * @see packages/insomnia-app/app/common/import.js
+ * @see packages/insomnia/src/common/import.js
  */
 
 type RawTypeKey = 'api_spec'
@@ -83,18 +83,31 @@ const insomniaAdapter: DbAdapter = async (filePath, filterTypes) => {
     __export_format: number;
     resources: RawTypeModel[];
   } | undefined;
+
   try {
     parsed = YAML.parse(content);
-  } catch (e) {
-    throw new InsoError(`Failed to parse ${fileName}.`, e);
+
+    if (!parsed?.__export_format) {
+      const insomnia5Import = importInsomniaV5Data(content);
+
+      if (insomnia5Import.length > 0) {
+        parsed = {
+          __export_format: 5,
+          // @ts-expect-error -- TSCONVERSION
+          resources: insomnia5Import,
+        };
+      }
+    }
+  } catch (error) {
+    throw new InsoError(`Failed to parse ${fileName}.`, error);
   }
 
-  // We are supporting only v4 files
+  // We are supporting only v4 and v5 files
   if (!parsed) {
     throw new InsoError(`Failed to parse ${fileName}.`);
   } else if (!parsed.__export_format) {
     throw new InsoError(`Expected an Insomnia v4 export file; unexpected data found in ${fileName}.`);
-  } else if (parsed.__export_format !== 4) {
+  } else if (parsed.__export_format !== 4 && parsed.__export_format !== 5) {
     throw new InsoError(`Expected an Insomnia v4 export file; found an Insomnia v${parsed.__export_format} export file in ${fileName}.`);
   }
 
@@ -110,7 +123,7 @@ const insomniaAdapter: DbAdapter = async (filePath, filterTypes) => {
       const obj = parseRaw(model);
 
       // Store it, only if the key value exists
-      (db[obj.type] as UNKNOWN[])?.push(obj);
+      (db[obj.type] as {}[])?.push(obj);
     }
   });
 
@@ -118,3 +131,4 @@ const insomniaAdapter: DbAdapter = async (filePath, filterTypes) => {
 };
 
 export default insomniaAdapter;
+export const insomniaExportAdapter = insomniaAdapter;

@@ -1,4 +1,4 @@
-import { Stats } from 'mocha';
+import type { Stats } from 'mocha';
 
 interface TestErr {
   generatedMessage: boolean;
@@ -15,6 +15,7 @@ interface NodeErr {
 }
 
 export interface TestResult {
+  id: string;
   title: string;
   fullTitle: string;
   file?: string;

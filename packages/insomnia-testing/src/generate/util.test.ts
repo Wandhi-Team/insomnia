@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { escapeJsStr, indent } from './util';
 
 describe('util', () => {
